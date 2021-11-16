@@ -2,19 +2,18 @@ import os
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv 
-from random import choice
-import main
+# import main
 
 # Difficulty modes
-modes = [20, 10, 5, 1]
+def_modes = [20, 10, 5, 1]
 
 # Load env file
 load_dotenv()
 
 # Instantiating the bot with a prefix
-client = commands.Bot(command_prefix='aq ', help_command=None) 
-# Setting the intent to read messages as true
-client.intents.messages = True
+client = commands.Bot(command_prefix='aq', help_command=None, case_insensitive=True, strip_after_prefix=True, intents=discord.Intents.all()) 
+# Setting all intents true
+
 
 # the on_ready function starts when the bot is ready to recieve commands 
 @client.event
@@ -27,13 +26,13 @@ async def on_ready():
 async def help(ctx):
     embed = discord.Embed(title="aniQuiz Help", description="Commands and some stuff about the bot", color=0xFF5733)
     embed.add_field(name="Commands", value="""
-    -> aq start : Starts the quiz
+    -> `aq start` : Starts the quiz
 
-    -> aq end : Ends the quiz
+    -> `aq end` : Ends the quiz
 
-    -> aq board : Shows the leaderboard
+    -> `aq board` : Shows the leaderboard
 
-    -> aq ping : Shows latency of the bot
+    -> `aq ping` : Shows latency of the bot
 
     -> aq help : displays available commands
     """, inline=False)
@@ -45,13 +44,18 @@ async def help(ctx):
 async def ping(ctx):
     await ctx.send(f"your ping is: {round(client.latency * 1000)}ms")
 
+# Error handling
+@client.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingRequiredArgument):
+        await ctx.send("Please choose a difficulty mode")
+
 # Start quiz command
 @client.command()
-async def start(ctx):
+async def start(ctx, mode : int):
     await ctx.send("A quiz has been **started** !")
-    await ctx.send(f"Type your guess within {choice(modes)} seconds")
-    await ctx.send(file = discord.File(f"{main.target_path}"))
-    exec(open('main.py').read())
+    await ctx.send(f"Type your guess within {mode} seconds")
+    # await ctx.send(file = discord.File(f"{main.target_path}"))
 
 # Reading a message
 @client.event
