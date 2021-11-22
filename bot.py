@@ -1,8 +1,9 @@
 import os
+import time
 import discord
 from discord.ext import commands
 from dotenv import load_dotenv 
-# import main
+import main
 
 # Difficulty modes
 def_modes = [20, 10, 5, 1]
@@ -34,7 +35,7 @@ async def help(ctx):
 
     -> `aq ping` : Shows latency of the bot
 
-    -> aq help : displays available commands
+    -> `aq help` : displays available commands
     """, inline=False)
     embed.set_footer(text="If you enjoyed using this bot please give us a star and consider donating, makes our day tbh.")
     await ctx.send(embed=embed)
@@ -53,16 +54,35 @@ async def on_command_error(ctx, error):
 # Start quiz command
 @client.command()
 async def start(ctx, mode : int):
+    global fetched_anime
     await ctx.send("A quiz has been **started** !")
-    await ctx.send(f"Type your guess within {mode} seconds")
-    # await ctx.send(file = discord.File(f"{main.target_path}"))
+
+    # Generating random anime & link and then downloading it
+    fetched_anime = main.anime_fetch(1)
+    main.op_download(list(fetched_anime.values())[0])
+
+    await ctx.send(file = discord.File(f"{main.target_path}")) # sending the video
+
+    # Deleting residual files
+    main.clean_folder()
+
+    await ctx.send(f"You have {mode} seconds")
+    await ctx.send("Type your guesses below")
 
 # Reading a message
 @client.event
 async def on_message(message):
-    channel = message.channel
-    # if message.content == "smitesh":
-    #     await channel.send("Correct! 5 points to griffindor")
-    await client.process_commands(message) # This line is needed for commands to work in conjuction with on_message events
+    global fetched_anime
+    if message.author.bot and message.content == "Type your guesses below":
+        bot_channel = message.channel
+        # timeout variable can be omitted, if you use specific value in the while condition
+        timeout = 600   # [seconds]
 
+        timeout_start = time.time()
+
+        while time.time() < timeout_start + timeout:
+            if message.content in list(fetched_anime.keys())[0].split():
+                print("correct")
+    await client.process_commands(message) # This line is needed for commands to work in conjuction with on_message events
+ 
 client.run(os.getenv('BOT_TOKEN'))
